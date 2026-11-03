@@ -356,9 +356,8 @@ real values are ignored by Git.
   `VITE_API_BASE_URL` to the backend's public HTTPS URL ending in `/api/v1`.
 - **Backend (Render):** the checked-in [`render.yaml`](./render.yaml) defines
   the backend root directory, dependency installation, Alembic release step,
-  Uvicorn start command, and `/api/v1/health` check. Set its `DATABASE_URL`
-  to a provisioned, reachable MySQL database using a URL-encoded password;
-  Render does not create that MySQL database for this service. Also configure
+  Uvicorn start command, `/api/v1/health` check, and a managed Render Postgres
+  database. The database connection is injected automatically. Also configure
   `CORS_ORIGINS` with the exact public frontend HTTPS origin,
   `AUTH_SECRET_KEY` with a newly generated value of at least 32 bytes,
   `APP_ENV=production`, `APP_BASE_URL` with the public frontend URL,
@@ -366,11 +365,12 @@ real values are ignored by Git.
   variables. The pre-deploy command runs
   `python -m alembic upgrade head` before the service receives traffic.
   Verify the public `/api/v1/health` endpoint returns HTTP 200 before testing
-  registration.
-- **MySQL:** use a managed MySQL service with TLS/network restrictions and
-  least-privilege database credentials. Store its connection string only in
-  the backend host's secret environment configuration. Allow the backend host
-  to connect, not arbitrary public clients.
+  registration. The `preDeployCommand` applies all committed Alembic
+  migrations before each deployment, so schema changes can be released
+  incrementally with the application.
+- **Database:** Render Postgres is used for the MVP deployment. Keep local
+  development on SQLite if desired; the SQLAlchemy models and migrations
+  support both database URLs.
 
 Before production, configure exact production origins, enable TLS on both
 services, provision and rotate secrets through the hosting providers, and run

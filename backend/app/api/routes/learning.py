@@ -45,7 +45,7 @@ facilitator_guide_router = APIRouter(prefix="/facilitator/guides")
 
 @supervisor_router.get("", response_model=list[SupervisorModuleResponse])
 def list_supervisor_modules(
-    _: User = Depends(require_role(("supervisor", "administrator"))),
+    _: User = Depends(require_role("administrator")),
     db: Session = Depends(get_db),
 ) -> list[SupervisorModuleResponse]:
     modules = db.scalars(
@@ -650,7 +650,7 @@ def replace_draft_questions(
 )
 def create_module_draft(
     data: DraftModuleCreate,
-    _: User = Depends(require_role(("supervisor", "administrator"))),
+    _: User = Depends(require_role("administrator")),
     db: Session = Depends(get_db),
 ) -> ModulePublicationResponse:
     module = LearningModule(
@@ -710,7 +710,7 @@ def create_module_draft(
 def update_module_draft(
     module_id: int,
     data: DraftModuleCreate,
-    _: User = Depends(require_role(("supervisor", "administrator"))),
+    _: User = Depends(require_role("administrator")),
     db: Session = Depends(get_db),
 ) -> ModulePublicationResponse:
     module = db.get(LearningModule, module_id)
@@ -744,7 +744,7 @@ def update_module_draft(
 def review_module(
     module_id: int,
     data: ModuleReviewRequest,
-    user: User = Depends(require_role(("supervisor", "administrator"))),
+    user: User = Depends(require_role("administrator")),
     db: Session = Depends(get_db),
 ) -> ModuleReviewResponse:
     if not data.confirm_review:
@@ -810,7 +810,7 @@ def review_module(
 )
 def publish_module(
     module_id: int,
-    _: User = Depends(require_role(("supervisor", "administrator"))),
+    _: User = Depends(require_role("administrator")),
     db: Session = Depends(get_db),
 ) -> ModulePublicationResponse:
     module = db.scalar(

@@ -80,30 +80,16 @@ class AuthenticationTests(unittest.TestCase):
             "password": STRONG_PASSWORD,
             **extra,
         }
-        verification_urls: list[str] = []
-
-        async def capture_email(_settings, _recipient, _name, url):
-            verification_urls.append(url)
-
-        with patch(
-            "app.api.routes.auth.send_verification_email",
-            new=capture_email,
-        ):
-            response = self.client.post(
-                "/api/v1/auth/register", headers=TEST_ORIGIN, json=payload
-            )
+        response = self.client.post(
+            "/api/v1/auth/register", headers=TEST_ORIGIN, json=payload
+        )
         if response.status_code == 201:
-            token = parse_qs(urlparse(verification_urls[0]).query)["token"][0]
-            verified = self.client.get(
-                "/api/v1/auth/verify-email",
-                params={"token": token},
-            )
-            self.assertEqual(verified.status_code, 200)
-            self.client.post(
+            login = self.client.post(
                 "/api/v1/auth/login",
                 headers=TEST_ORIGIN,
                 json={"email": payload["email"], "password": payload["password"]},
             )
+            self.assertEqual(login.status_code, 200)
         return response
 
     def test_signup_hashes_password_and_never_accepts_self_assigned_role(self) -> None:
@@ -249,22 +235,21 @@ class AuthenticationTests(unittest.TestCase):
         self.assertEqual(response.json()["detail"], "Email or password is incorrect.")
         self.assertNotIn("set-cookie", response.headers)
 
-    def test_login_rejects_an_unverified_email(self) -> None:
+    def test_new_learner_can_login_without_email_verification(self) -> None:
         payload = {
             "name": "Unverified",
             "email": "unverified@example.com",
             "password": STRONG_PASSWORD,
         }
-        with patch("app.api.routes.auth.send_verification_email", new=AsyncMock()):
-            registration = self.client.post(
-                "/api/v1/auth/register", headers=TEST_ORIGIN, json=payload
-            )
+        registration = self.client.post(
+            "/api/v1/auth/register", headers=TEST_ORIGIN, json=payload
+        )
         self.assertEqual(registration.status_code, 201)
         login = self.client.post(
             "/api/v1/auth/login", headers=TEST_ORIGIN, json=payload
         )
-        self.assertEqual(login.status_code, 403)
-        self.assertIn("verify your email", login.json()["detail"])
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(login.json()["role"], "learner")
 
     def test_unknown_and_known_email_reset_responses_are_indistinguishable(self) -> None:
         self.register()

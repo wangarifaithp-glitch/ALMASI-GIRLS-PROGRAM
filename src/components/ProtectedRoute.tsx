@@ -57,7 +57,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <main className="placeholder-page" aria-live="polite">Checking your account…</main>;
   }
 
-  if (role === requiredRole) {
+  if (role === requiredRole || role === "administrator") {
     return <>{children}</>;
   }
 

@@ -15,7 +15,9 @@ services:
       - key: APP_NAME
         value: ALMASI API
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: almasi-db
+          property: connectionString
       - key: AUTH_SECRET_KEY
         sync: false
       - key: CORS_ORIGINS
@@ -38,3 +40,9 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         sync: false
+
+databases:
+  - name: almasi-db
+    databaseName: almasi
+    user: almasi
+    plan: free

@@ -57,7 +57,7 @@ function errorMessage(error: unknown): string {
     return "Your sign-in has expired. Please sign in again.";
   }
   if (error instanceof ApiError && error.status === 403) {
-    return "A supervisor or administrator account is required to review curriculum.";
+    return "An administrator account is required to review curriculum.";
   }
   return "We couldn’t connect to the curriculum service. Please try again.";
 }

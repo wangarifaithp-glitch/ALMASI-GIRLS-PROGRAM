@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ApiError, apiFetch } from "../lib/api";
 
 type ModuleProgress = {
@@ -54,6 +54,21 @@ type LearnerModule = {
   submitted_at: string | null;
 };
 
+const moduleIntroductoryImages: Record<number, string> = {
+  1: "/curriculum/module-01.jpg",
+  2: "/curriculum/module-02.jpg",
+  3: "/curriculum/module-03.jpg",
+  4: "/curriculum/module-04.jpg",
+  5: "/curriculum/module-05.jpg",
+  6: "/curriculum/module-06.jpg",
+  7: "/curriculum/module-07.jpg",
+  8: "/curriculum/module-08.jpg",
+  9: "/curriculum/module-09.jpg",
+  10: "/curriculum/module-10.jpg",
+  11: "/curriculum/module-11.jpg",
+  12: "/curriculum/module-12.jpg",
+};
+
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 function requestErrorMessage(error: unknown): string {
@@ -86,6 +101,8 @@ export default function LearnerModules() {
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "error" | "done">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [learnerName, setLearnerName] = useState("Learner");
+  const moduleContentRef = useRef<HTMLElement | null>(null);
+  const shouldScrollToModule = useRef(false);
 
   const completedModules = modules.filter((item) => item.is_completed).length;
   const progressPercent = modules.length
@@ -168,6 +185,12 @@ export default function LearnerModules() {
       active = false;
     };
   }, [selectedId, detailRetry]);
+
+  useEffect(() => {
+    if (!module || !shouldScrollToModule.current) return;
+    shouldScrollToModule.current = false;
+    moduleContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [module]);
 
   async function savePrivateText(
     kind: "notes" | "reflections",
@@ -399,7 +422,12 @@ export default function LearnerModules() {
                   aria-current={selectedId === item.id ? "true" : undefined}
                   className={`workspace-module workspace-module--button${selectedId === item.id ? " workspace-module--selected" : ""}`}
                   key={item.id}
-                  onClick={() => setSelectedId(item.id)}
+                  onClick={() => {
+                    if (item.id !== selectedId) {
+                      shouldScrollToModule.current = true;
+                      setSelectedId(item.id);
+                    }
+                  }}
                   type="button"
                 >
                   <span className="workspace-module__number">
@@ -434,12 +462,16 @@ export default function LearnerModules() {
             </section>
           )}
           {module && detailState === "ready" && (
-            <article className="workspace-card learner-module-content" id="module-workspace">
+            <article
+              className="workspace-card learner-module-content"
+              id="module-workspace"
+              ref={moduleContentRef}
+            >
               <span className="workspace-kicker">WEEK {module.week_number}</span>
               <h3>{module.title}</h3>
               <div className="learner-module-image">
                 <img
-                  src={module.image_url}
+                  src={moduleIntroductoryImages[module.week_number] ?? module.image_url}
                   alt={module.image_alt}
                   loading="lazy"
                   onError={(event) => {

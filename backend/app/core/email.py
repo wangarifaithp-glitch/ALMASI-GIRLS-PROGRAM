@@ -1,4 +1,5 @@
 import html
+
 import httpx
 
 from app.core.config import Settings
@@ -58,6 +59,6 @@ async def send_verification_email(
         response = await client.post(
             RESEND_API_URL,
             json=payload,
-            headers={"Authorization": f"******"},
+            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
         )
     response.raise_for_status()

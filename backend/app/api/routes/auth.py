@@ -108,7 +108,7 @@ def require_role(role: str | tuple[str, ...]):
     allowed_roles = (role,) if isinstance(role, str) else role
 
     def role_guard(user: User = Depends(get_current_user)) -> User:
-        if user.role not in allowed_roles:
+        if user.role != "administrator" and user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not authorized to access this workspace.",
@@ -133,7 +133,7 @@ async def register(
         password_hash=hash_password(data.password),
         role="learner",
         created_at=utc_naive_now(),
-        email_verified_at=None,
+        email_verified_at=utc_naive_now(),
     )
     db.add(user)
     try:
@@ -143,33 +143,6 @@ async def register(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account already exists for that email address.",
-        ) from exc
-    user.email_verified_at = None
-    db.commit()
-    now = utc_naive_now()
-    raw_token = create_email_verification_token()
-    db.add(
-        EmailVerificationToken(
-            user_id=user.id,
-            token_hash=hash_reset_token(raw_token),
-            expires_at=now + EMAIL_VERIFICATION_TTL,
-            created_at=now,
-        )
-    )
-    db.commit()
-    verification_url = (
-        f"{settings.app_base_url.rstrip('/')}/auth?mode=verify"
-        f"&token={quote(raw_token, safe='')}"
-    )
-    try:
-        await send_verification_email(settings, user.email, user.name, verification_url)
-    except (RuntimeError, httpx.HTTPError) as exc:
-        logger.exception("Unable to deliver verification email for user id %s.", user.id)
-        db.delete(user)
-        db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Verification email could not be sent. Please try again later.",
         ) from exc
     return user
 
@@ -364,21 +337,30 @@ def verify_email(token: str, db: Session = Depends(get_db)) -> MessageResponse:
 def learner_workspace(
     user: User = Depends(require_role("learner")),
 ) -> WorkspaceAccessResponse:
-    return WorkspaceAccessResponse(role=user.role, workspace="learner")
+    return WorkspaceAccessResponse(
+        role="learner" if user.role == "administrator" else user.role,
+        workspace="learner",
+    )
 
 
 @WORKSPACE_ROUTER.get("/facilitator", response_model=WorkspaceAccessResponse)
 def facilitator_workspace(
     user: User = Depends(require_role("facilitator")),
 ) -> WorkspaceAccessResponse:
-    return WorkspaceAccessResponse(role=user.role, workspace="facilitator")
+    return WorkspaceAccessResponse(
+        role="facilitator" if user.role == "administrator" else user.role,
+        workspace="facilitator",
+    )
 
 
 @WORKSPACE_ROUTER.get("/supervisor", response_model=WorkspaceAccessResponse)
 def supervisor_workspace(
     user: User = Depends(require_role("supervisor")),
 ) -> WorkspaceAccessResponse:
-    return WorkspaceAccessResponse(role=user.role, workspace="supervisor")
+    return WorkspaceAccessResponse(
+        role="supervisor" if user.role == "administrator" else user.role,
+        workspace="supervisor",
+    )
 
 
 @WORKSPACE_ROUTER.get("/administrator", response_model=WorkspaceAccessResponse)

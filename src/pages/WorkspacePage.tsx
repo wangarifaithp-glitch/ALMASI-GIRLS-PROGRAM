@@ -37,17 +37,21 @@ export default function WorkspacePage({ role }: { role: WorkspaceRole }) {
   const [status, setStatus] = useState<"loading" | "ready" | "forbidden" | "error">("loading");
   const [signOutError, setSignOutError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [accountRole, setAccountRole] = useState<WorkspaceRole>(role);
 
   useEffect(() => {
     let active = true;
-    apiFetch(`workspaces/${role}`)
-      .then((response) => response.json() as Promise<WorkspaceAccess>)
-      .then((access) => {
+    Promise.all([
+      apiFetch(`workspaces/${role}`).then((response) => response.json() as Promise<WorkspaceAccess>),
+      apiFetch("auth/me").then((response) => response.json() as Promise<{ role?: WorkspaceRole }>),
+    ])
+      .then(([access, user]) => {
         if (!active) return;
-        if (access.role !== role || access.workspace !== role) {
+        if (access.role !== role || access.workspace !== role || !user.role) {
           setStatus("forbidden");
           return;
         }
+        setAccountRole(user.role);
         setStatus("ready");
       })
       .catch((error: unknown) => {
@@ -70,7 +74,16 @@ export default function WorkspacePage({ role }: { role: WorkspaceRole }) {
           : "The account service is unavailable. Please retry signing out.",
       );
     }
+
   }
+
+  const canSwitchWorkspace = accountRole === "administrator";
+  const workspaceLinks = [
+    { role: "learner" as const, label: "Learner view" },
+    { role: "facilitator" as const, label: "Facilitator view" },
+    { role: "supervisor" as const, label: "Supervisor view" },
+    { role: "administrator" as const, label: "Administrator view" },
+  ];
 
   return (
     <main className="workspace-page">
@@ -78,6 +91,19 @@ export default function WorkspacePage({ role }: { role: WorkspaceRole }) {
         <Brand />
         <div className="workspace-header__actions">
           <span>{roleLabels[role]}</span>
+          {canSwitchWorkspace && (
+            <nav aria-label="Switch workspace" className="workspace-switcher">
+              {workspaceLinks.map((workspace) => (
+                <Link
+                  className={workspace.role === role ? "is-active" : ""}
+                  key={workspace.role}
+                  to={`/app/${workspace.role}`}
+                >
+                  {workspace.label}
+                </Link>
+              ))}
+            </nav>
+          )}
           <button className="workspace-signout" onClick={signOut} type="button">
             Sign out
           </button>
@@ -120,10 +146,7 @@ export default function WorkspacePage({ role }: { role: WorkspaceRole }) {
             ) : role === "facilitator" ? (
               <FacilitatorDashboard />
             ) : role === "supervisor" ? (
-              <>
-                <SupervisorDashboard />
-                <SupervisorCurriculum />
-              </>
+              <SupervisorDashboard />
             ) : (
               <>
                 <AdministratorDashboard />

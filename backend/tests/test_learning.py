@@ -80,6 +80,7 @@ class LearnerModuleTests(unittest.TestCase):
         self.other_learner = self.create_user("other@example.com", "learner")
         self.facilitator = self.create_user("facilitator@example.com", "facilitator")
         self.supervisor = self.create_user("supervisor@example.com", "supervisor")
+        self.administrator = self.create_user("administrator@example.com", "administrator")
         self.draft = self.create_module(published=False)
         self.module = self.create_module(published=True, week_number=2)
         self.client = TestClient(app)
@@ -202,7 +203,7 @@ class LearnerModuleTests(unittest.TestCase):
         supervisor_client = TestClient(app)
         self.authenticate(supervisor_client, self.supervisor)
         supervisor_modules = supervisor_client.get("/api/v1/supervisor/modules")
-        self.assertEqual(supervisor_modules.status_code, 200)
+        self.assertEqual(supervisor_modules.status_code, 403)
         self.assertNotIn("Private thought", supervisor_modules.text)
         self.assertNotIn("Updated note", supervisor_modules.text)
         supervisor_client.close()
@@ -410,7 +411,7 @@ class LearnerModuleTests(unittest.TestCase):
         )
         self.assertEqual(invalid_question.status_code, 422)
 
-    def test_facilitator_guides_are_staff_only_and_reviewable_by_supervisors(self) -> None:
+    def test_facilitator_guides_are_staff_only_and_reviewable_by_administrators(self) -> None:
         facilitator_client = TestClient(app)
         self.authenticate(facilitator_client, self.facilitator)
         response = facilitator_client.get("/api/v1/facilitator/guides")
@@ -435,10 +436,16 @@ class LearnerModuleTests(unittest.TestCase):
         supervisor_client = TestClient(app)
         self.authenticate(supervisor_client, self.supervisor)
         supervisor_modules = supervisor_client.get("/api/v1/supervisor/modules")
-        self.assertEqual(supervisor_modules.status_code, 200)
+        self.assertEqual(supervisor_modules.status_code, 403)
+        supervisor_client.close()
+
+        administrator_client = TestClient(app)
+        self.authenticate(administrator_client, self.administrator)
+        administrator_modules = administrator_client.get("/api/v1/supervisor/modules")
+        self.assertEqual(administrator_modules.status_code, 200)
         reviewed_module = next(
             item
-            for item in supervisor_modules.json()
+            for item in administrator_modules.json()
             if item["id"] == self.module.id
         )
         self.assertEqual(len(reviewed_module["quiz_questions"]), 5)
@@ -448,10 +455,10 @@ class LearnerModuleTests(unittest.TestCase):
             210,
         )
         self.assertEqual(
-            supervisor_client.get("/api/v1/facilitator/guides").status_code,
-            403,
+            administrator_client.get("/api/v1/facilitator/guides").status_code,
+            200,
         )
-        supervisor_client.close()
+        administrator_client.close()
 
     @staticmethod
     def quiz_payload() -> list[dict[str, object]]:
@@ -490,7 +497,7 @@ class LearnerModuleTests(unittest.TestCase):
             "safeguarding": ["Do not require personal disclosures."],
         }
 
-    def test_only_supervisors_can_create_and_publish_complete_modules(self) -> None:
+    def test_only_administrators_can_create_and_publish_complete_modules(self) -> None:
         forbidden = self.client.post(
             "/api/v1/supervisor/modules",
             json={
@@ -508,7 +515,7 @@ class LearnerModuleTests(unittest.TestCase):
 
         supervisor_client = TestClient(app)
         self.authenticate(supervisor_client, self.supervisor)
-        created = supervisor_client.post(
+        denied = supervisor_client.post(
             "/api/v1/supervisor/modules",
             json={
                 "week_number": 3,
@@ -532,25 +539,46 @@ class LearnerModuleTests(unittest.TestCase):
                 "facilitator_guide": self.guide_payload(),
             },
         )
+        self.assertEqual(denied.status_code, 403)
+        supervisor_client.close()
+
+        administrator_client = TestClient(app)
+        self.authenticate(administrator_client, self.administrator)
+        created = administrator_client.post(
+            "/api/v1/supervisor/modules",
+            json={
+                "week_number": 3,
+                "title": "Another module",
+                "content_markdown": "Content",
+                "learning_objectives": ["Objective"],
+                "reflection_prompts": ["What is one takeaway?"],
+                "questions": [
+                    {"position": 1, "kind": "case_study", "prompt": "What could the learner do?"},
+                    {"position": 2, "kind": "assignment", "prompt": "What will the learner practise?"},
+                ],
+                "quiz_questions": self.quiz_payload(),
+                "facilitator_guide": self.guide_payload(),
+            },
+        )
         self.assertEqual(created.status_code, 201)
         module_id = created.json()["id"]
-        blocked_publish = supervisor_client.post(
+        blocked_publish = administrator_client.post(
             f"/api/v1/supervisor/modules/{module_id}/publish"
         )
         self.assertEqual(blocked_publish.status_code, 409)
-        invalid_review = supervisor_client.post(
+        invalid_review = administrator_client.post(
             f"/api/v1/supervisor/modules/{module_id}/review",
             json={"confirm_review": False},
         )
         self.assertEqual(invalid_review.status_code, 422)
-        reviewed = supervisor_client.post(
+        reviewed = administrator_client.post(
             f"/api/v1/supervisor/modules/{module_id}/review",
             json={"confirm_review": True},
         )
         self.assertEqual(reviewed.status_code, 200)
         self.assertTrue(reviewed.json()["is_reviewed"])
-        self.assertEqual(reviewed.json()["reviewed_by_id"], self.supervisor.id)
-        unpublished = supervisor_client.post(
+        self.assertEqual(reviewed.json()["reviewed_by_id"], self.administrator.id)
+        unpublished = administrator_client.post(
             f"/api/v1/supervisor/modules/{module_id}/publish"
         )
         self.assertEqual(unpublished.status_code, 200)
@@ -559,7 +587,7 @@ class LearnerModuleTests(unittest.TestCase):
             self.client.get("/api/v1/learner/modules").json()[-1]["id"], module_id
         )
 
-        incomplete = supervisor_client.post(
+        incomplete = administrator_client.post(
             "/api/v1/supervisor/modules",
             json={
                 "week_number": 4,
@@ -575,7 +603,7 @@ class LearnerModuleTests(unittest.TestCase):
             },
         )
         self.assertEqual(incomplete.status_code, 201)
-        incomplete_review = supervisor_client.post(
+        incomplete_review = administrator_client.post(
             f"/api/v1/supervisor/modules/{incomplete.json()['id']}/review",
             json={"confirm_review": True},
         )
@@ -601,7 +629,7 @@ class LearnerModuleTests(unittest.TestCase):
             supervisor_client.get(f"/api/v1/learner/modules/{self.module.id}").status_code,
             403,
         )
-        self.assertEqual(supervisor_client.get("/api/v1/supervisor/modules").status_code, 200)
+        self.assertEqual(supervisor_client.get("/api/v1/supervisor/modules").status_code, 403)
         supervisor_client.close()
 
 

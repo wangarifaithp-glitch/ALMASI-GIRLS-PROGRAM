@@ -47,6 +47,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,6 +70,8 @@ export default function AuthPage() {
     setMessage("");
     setPassword("");
     setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     navigate(nextMode === "signup" ? "/signup" : `/auth${nextMode === "login" ? "" : `?mode=${nextMode}`}`);
   }
 
@@ -97,7 +101,7 @@ export default function AuthPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password }),
         });
-        setMessage("Check your email for a verification link before signing in.");
+        setMessage("Your learner account is ready. You can sign in now.");
         setPassword("");
         setConfirmPassword("");
         return;
@@ -263,16 +267,33 @@ export default function AuthPage() {
             {mode !== "forgot" && (
               <label className="auth-field">
                 <span>{mode === "reset" ? "New password" : "Password"}</span>
-                <input
-                  autoComplete={mode === "signup" ? "new-password" : mode === "reset" ? "new-password" : "current-password"}
-                  name="password"
-                  maxLength={128}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder={mode === "reset" ? "Enter your new password" : "Enter your password"}
-                  required
-                  type="password"
-                  value={password}
-                />
+                <span className="auth-password-input">
+                  <input
+                    autoComplete={mode === "signup" ? "new-password" : mode === "reset" ? "new-password" : "current-password"}
+                    name="password"
+                    maxLength={128}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder={mode === "reset" ? "Enter your new password" : "Enter your password"}
+                    required
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                  />
+                  <button
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    className="auth-password-toggle"
+                    onClick={() => setShowPassword((isVisible) => !isVisible)}
+                    type="button"
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      {showPassword ? (
+                        <path d="M3 3l18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 4.24A10.7 10.7 0 0 1 12 4c5 0 8.5 4 9.5 5.3a1.2 1.2 0 0 1 0 1.4 15.8 15.8 0 0 1-3.1 3.1M6.23 6.23A15.8 15.8 0 0 0 2.5 9.3a1.2 1.2 0 0 0 0 1.4C3.5 12 7 16 12 16a10.7 10.7 0 0 0 2.12-.24" />
+                      ) : (
+                        <path d="M2.5 10.3C3.5 9 7 5 12 5s8.5 4 9.5 5.3a1.2 1.2 0 0 1 0 1.4C20.5 13 17 17 12 17s-8.5-4-9.5-5.3a1.2 1.2 0 0 1 0-1.4ZM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+                      )}
+                    </svg>
+                  </button>
+                </span>
               </label>
             )}
 
@@ -296,16 +317,33 @@ export default function AuthPage() {
                 </ul>
                 <label className="auth-field">
                   <span>Confirm password</span>
-                  <input
-                    autoComplete="new-password"
-                    name="confirm-password"
-                    maxLength={128}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Enter your password again"
-                    required
-                    type="password"
-                    value={confirmPassword}
-                  />
+                  <span className="auth-password-input">
+                    <input
+                      autoComplete="new-password"
+                      name="confirm-password"
+                      maxLength={128}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      placeholder="Enter your password again"
+                      required
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                    />
+                    <button
+                      aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                      aria-pressed={showConfirmPassword}
+                      className="auth-password-toggle"
+                      onClick={() => setShowConfirmPassword((isVisible) => !isVisible)}
+                      type="button"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 24 24">
+                        {showConfirmPassword ? (
+                          <path d="M3 3l18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 4.24A10.7 10.7 0 0 1 12 4c5 0 8.5 4 9.5 5.3a1.2 1.2 0 0 1 0 1.4 15.8 15.8 0 0 1-3.1 3.1M6.23 6.23A15.8 15.8 0 0 0 12 16a10.7 10.7 0 0 0 2.12-.24" />
+                        ) : (
+                          <path d="M2.5 10.3C3.5 9 7 5 12 5s8.5 4 9.5 5.3a1.2 1.2 0 0 1 0 1.4C20.5 13 17 17 12 17s-8.5-4-9.5-5.3a1.2 1.2 0 0 1 0-1.4ZM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+                        )}
+                      </svg>
+                    </button>
+                  </span>
                 </label>
               </>
             )}
