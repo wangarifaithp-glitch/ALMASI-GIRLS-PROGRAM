@@ -105,6 +105,16 @@ class AuthenticationTests(unittest.TestCase):
         self.assertNotEqual(user.password_hash, STRONG_PASSWORD)
         self.assertTrue(user.password_hash.startswith("$argon2"))
 
+    def test_render_postgres_url_is_normalized_for_psycopg(self) -> None:
+        settings = Settings(
+            database_url="postgres://user:password@example.com/almasi",
+            auth_secret_key="test-secret-not-for-production-32-bytes",
+        )
+        self.assertEqual(
+            settings.database_url,
+            "postgresql+psycopg://user:password@example.com/almasi",
+        )
+
     def test_health_registration_login_and_current_user_flow(self) -> None:
         health = self.client.get("/api/v1/health")
         self.assertEqual(health.status_code, 200)

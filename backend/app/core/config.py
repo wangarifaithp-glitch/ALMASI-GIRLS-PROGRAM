@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
@@ -16,6 +17,18 @@ class Settings(BaseSettings):
     auth_secret_key: str | None = None
     resend_api_key: str | None = None
     resend_from_email: str | None = None
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        database_url = value.strip()
+        if database_url.startswith("postgres://"):
+            return "postgresql+psycopg://" + database_url.removeprefix("postgres://")
+        if database_url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + database_url.removeprefix("postgresql://")
+        return database_url
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ENV_FILE,
