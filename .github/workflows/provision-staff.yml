@@ -1,19 +1,18 @@
-
 name: Provision ALMASI Staff Account
 
 on:
   workflow_dispatch:
     inputs:
       name:
-        description: "Peris faith W"
+        description: Account holder's name
         required: true
         type: string
       email:
-        description: "p45826592@gmail.com"
+        description: Account email address
         required: true
         type: string
       role:
-        description: "administrator"
+        description: Staff role
         required: true
         type: choice
         options:
@@ -29,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -46,11 +45,11 @@ jobs:
       - name: Provision staff account
         working-directory: backend
         env:
-          DATABASE_URL: postgresql://alm_t_db_user:5WbXd5ikN4jk4qtIrZJVISWckk5uS889@dpg-dbl4somgekts7391i1jg-a.ohio-postgres.render.com/alm_t_db 
-          STAFF_NAME:  pesh-faith 
-          STAFF_EMAIL: perie5833.com
-          STAFF_ROLE: facilitor
-          STAFF_PASSWORD:  Wahu.N@-1703
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
+          STAFF_NAME: ${{ inputs.name }}
+          STAFF_EMAIL: ${{ inputs.email }}
+          STAFF_ROLE: ${{ inputs.role }}
         run: |
           python - <<'PY'
           import os
@@ -77,15 +76,10 @@ jobs:
           email = os.environ["STAFF_EMAIL"].strip().lower()
 
           with SessionLocal() as db:
-              existing = db.scalar(
-                  select(User).where(User.email == email)
-              )
+              existing = db.scalar(select(User).where(User.email == email))
 
               if existing is not None:
-                  print(
-                      "This email already exists. No account was changed. "
-                      "Choose a new email address."
-                  )
+                  print("This email already exists. No account was changed.")
                   sys.exit(1)
 
               user = provision_staff_account(
@@ -96,8 +90,5 @@ jobs:
                   password=os.environ["STAFF_PASSWORD"],
               )
 
-              print(
-                  f"Successfully provisioned {user.role} account "
-                  f"for {user.email}."
-              )
+              print(f"Successfully provisioned {user.role} account for {user.email}.")
           PY
