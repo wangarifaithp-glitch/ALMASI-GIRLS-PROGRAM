@@ -1,3 +1,4 @@
+
 name: Provision ALMASI Staff Account
 
 on:
@@ -54,11 +55,7 @@ jobs:
           python - <<'PY'
           import os
           import sys
-
-          from sqlalchemy import select
-          from app.db.session import SessionLocal
-          from app.models import User
-          from app.provision_user import provision_staff_account
+          from sqlalchemy.engine import make_url
 
           required = [
               "DATABASE_URL",
@@ -70,8 +67,33 @@ jobs:
 
           missing = [key for key in required if not os.getenv(key)]
           if missing:
-              print("Missing required GitHub secrets or inputs:", ", ".join(missing))
+              print("Missing required variables:", ", ".join(missing))
               sys.exit(1)
+
+          raw_url = os.environ["DATABASE_URL"].strip()
+
+          if raw_url.startswith("postgres://"):
+              database_url = "postgresql+psycopg://" + raw_url.removeprefix("postgres://")
+          elif raw_url.startswith("postgresql://"):
+              database_url = "postgresql+psycopg://" + raw_url.removeprefix("postgresql://")
+          else:
+              database_url = raw_url
+
+          try:
+              parsed_url = make_url(database_url)
+              print("Database URL format is valid.")
+              print("Database driver:", parsed_url.drivername)
+          except Exception:
+              print("DATABASE_URL is malformed.")
+              print("Check URL format and password encoding.")
+              sys.exit(1)
+
+          os.environ["DATABASE_URL"] = database_url
+
+          from sqlalchemy import select
+          from app.db.session import SessionLocal
+          from app.models import User
+          from app.provision_user import provision_staff_account
 
           email = os.environ["STAFF_EMAIL"].strip().lower()
 
