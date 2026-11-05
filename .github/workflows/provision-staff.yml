@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       email:
-        description: "perryswangari@gmail.com"
+        description: "p45826592@gmail.com"
         required: true
         type: string
       role:
@@ -47,8 +47,8 @@ jobs:
         working-directory: backend
         env:
           DATABASE_URL: postgresql://alm_t_db_user:5WbXd5ikN4jk4qtIrZJVISWckk5uS889@dpg-dbl4somgekts7391i1jg-a.ohio-postgres.render.com/alm_t_db 
-          STAFF_NAME:  wahu gladys 
-          STAFF_EMAIL: wahugladys9@gmail.com
+          STAFF_NAME:  pesh-faith 
+          STAFF_EMAIL: perie5833.com
           STAFF_ROLE: facilitor
           STAFF_PASSWORD:  Wahu.N@-1703
         run: |
