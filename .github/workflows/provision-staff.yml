@@ -1,0 +1,103 @@
+
+name: Provision ALMASI Staff Account
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Peris faith W"
+        required: true
+        type: string
+      email:
+        description: "wangarifaithp@gmail.com"
+        required: true
+        type: string
+      role:
+        description: "administrator"
+        required: true
+        type: choice
+        options:
+          - administrator
+          - facilitator
+          - supervisor
+
+permissions:
+  contents: read
+
+jobs:
+  provision-staff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Provision staff account
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://alm_t_db_user:5WbXd5ikN4jk4qtIrZJVISWckk5uS889@dpg-dbl4somgekts7391i1jg-a.ohio-postgres.render.com/alm_t_db 
+          STAFF_NAME:  wahu gladys 
+          STAFF_EMAIL: wahugladys9@gmail.com
+          STAFF_ROLE: facilitor
+          STAFF_PASSWORD:  Wahu.N@-1703
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+
+          from sqlalchemy import select
+          from app.db.session import SessionLocal
+          from app.models import User
+          from app.provision_user import provision_staff_account
+
+          required = [
+              "DATABASE_URL",
+              "STAFF_NAME",
+              "STAFF_EMAIL",
+              "STAFF_ROLE",
+              "STAFF_PASSWORD",
+          ]
+
+          missing = [key for key in required if not os.getenv(key)]
+          if missing:
+              print("Missing required GitHub secrets or inputs:", ", ".join(missing))
+              sys.exit(1)
+
+          email = os.environ["STAFF_EMAIL"].strip().lower()
+
+          with SessionLocal() as db:
+              existing = db.scalar(
+                  select(User).where(User.email == email)
+              )
+
+              if existing is not None:
+                  print(
+                      "This email already exists. No account was changed. "
+                      "Choose a new email address."
+                  )
+                  sys.exit(1)
+
+              user = provision_staff_account(
+                  db,
+                  name=os.environ["STAFF_NAME"],
+                  email=email,
+                  role=os.environ["STAFF_ROLE"],
+                  password=os.environ["STAFF_PASSWORD"],
+              )
+
+              print(
+                  f"Successfully provisioned {user.role} account "
+                  f"for {user.email}."
+              )
+          PY
