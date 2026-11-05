@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       email:
-        description: "wangarifaithp@gmail.com"
+        description: "perryswangari@gmail.com"
         required: true
         type: string
       role:
