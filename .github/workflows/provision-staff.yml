@@ -100,10 +100,6 @@ jobs:
           with SessionLocal() as db:
               existing = db.scalar(select(User).where(User.email == email))
 
-              if existing is not None:
-                  print("This email already exists. No account was changed.")
-                  sys.exit(1)
-
               user = provision_staff_account(
                   db,
                   name=os.environ["STAFF_NAME"],
