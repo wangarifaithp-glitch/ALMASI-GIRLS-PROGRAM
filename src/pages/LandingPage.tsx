@@ -1,7 +1,18 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import SiteHeader from "../components/SiteHeader";
+import { updatePageMetadata } from "../lib/seo";
 
 export default function LandingPage() {
+  useEffect(() => {
+    updatePageMetadata({
+      title: "ALMASI Girls Mentorship Programme | Faith, Confidence & Life Skills",
+      description:
+        "ALMASI is a 12-week, faith-centered mentorship programme helping girls build confidence, develop life skills and discover their potential.",
+      canonicalUrl: "https://almasi-girls-program-frontend.onrender.com/",
+    });
+  }, []);
+
   return (
     <div className="landing-page">
       <SiteHeader />
@@ -30,7 +41,7 @@ export default function LandingPage() {
               </p>
               <div className="hero__actions">
                 <a className="button button--primary" href="#programme">
-                  Explore the Programme <span aria-hidden="true">→</span>
+                  Explore the Programme
                 </a>
                 <Link className="button button--hero-outline" to="/signup">
                   Create an Account
@@ -165,7 +176,7 @@ export default function LandingPage() {
                 <p>Be encouraged by caring guidance and a community that makes space for you.</p>
               </article>
               <article className="benefit-card">
-                <span className="benefit-card__icon" aria-hidden="true">↗</span>
+                <span className="benefit-card__icon" aria-hidden="true">✦</span>
                 <h3>Progress you can notice</h3>
                 <p>Pause along the way to recognize your effort, learning, and growth.</p>
               </article>
@@ -210,7 +221,7 @@ export default function LandingPage() {
               encouragement, and caring mentorship.
             </p>
             <Link className="button button--photo-cta" to="/signup">
-              Begin your journey <span aria-hidden="true">→</span>
+              Begin your journey
             </Link>
           </div>
         </section>

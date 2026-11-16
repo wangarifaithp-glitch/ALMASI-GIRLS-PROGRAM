@@ -240,8 +240,8 @@ button:focus-visible {
   display: inline-flex;
   min-height: 42px;
   align-items: center;
-  gap: 12px;
-  padding: 5px 7px 5px 17px;
+  justify-content: center;
+  padding: 5px 17px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 999px;
   color: #fff;
@@ -251,28 +251,10 @@ button:focus-visible {
   transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
-.header-auth-button__icon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: 50%;
-  background: #fff;
-  color: #7c2457;
-  font-size: 16px;
-  line-height: 1;
-  transition: transform 180ms ease, background-color 180ms ease, color 180ms ease;
-}
-
 .header-auth-button:hover {
   background: #fff;
   color: #7c2457;
   transform: translateY(-2px);
-}
-
-.header-auth-button:hover .header-auth-button__icon {
-  background: #f7c4dd;
-  transform: rotate(45deg);
 }
 
 .header-auth-button--signup {
@@ -281,18 +263,8 @@ button:focus-visible {
   color: #7c2457;
 }
 
-.header-auth-button--signup .header-auth-button__icon {
-  background: #7c2457;
-  color: #fff;
-}
-
 .header-auth-button--signup:hover {
   background: #fceaf3;
-}
-
-.header-auth-button--signup:hover .header-auth-button__icon {
-  background: #542966;
-  color: #fff;
 }
 
 .brand {
@@ -1312,14 +1284,8 @@ button:focus-visible {
 
   .header-auth-button {
     min-height: 38px;
-    padding-left: 13px;
-    gap: 8px;
+    padding-inline: 13px;
     font-size: 11px;
-  }
-
-  .header-auth-button__icon {
-    width: 27px;
-    height: 27px;
   }
 
   .hero__grid {
@@ -1426,15 +1392,8 @@ button:focus-visible {
 
   .header-auth-button {
     min-height: 34px;
-    padding-left: 10px;
-    gap: 5px;
+    padding-inline: 10px;
     font-size: 10px;
-  }
-
-  .header-auth-button__icon {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
   }
 
   .site-header .brand__logo {

@@ -14,12 +14,10 @@ export default function SiteHeader() {
         </nav>
         <div className="site-header__actions">
           <Link className="header-auth-button header-auth-button--login" to="/auth?mode=login">
-            <span>Log in</span>
-            <span className="header-auth-button__icon" aria-hidden="true">↗</span>
+            Log in
           </Link>
           <Link className="header-auth-button header-auth-button--signup" to="/signup">
-            <span>Sign up</span>
-            <span className="header-auth-button__icon" aria-hidden="true">↗</span>
+            Sign up
           </Link>
         </div>
       </div>

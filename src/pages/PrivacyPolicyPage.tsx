@@ -1,10 +1,22 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import Brand from "../components/Brand";
 import { getContactDestination } from "../lib/publicDestinations";
+import { updatePageMetadata } from "../lib/seo";
 
 const contactUrl = getContactDestination(import.meta.env.VITE_CONTACT_URL);
 
 export default function PrivacyPolicyPage() {
+  useEffect(() => {
+    updatePageMetadata({
+      title: "Privacy Policy | ALMASI Girls Mentorship Programme",
+      description:
+        "Read ALMASI's draft privacy policy, describing information processed by its website and learning platform and how it is used.",
+      canonicalUrl:
+        "https://almasi-girls-program-frontend.onrender.com/privacy-policy",
+    });
+  }, []);
+
   return (
     <main className="legal-page">
       <div className="container legal-page__container">
